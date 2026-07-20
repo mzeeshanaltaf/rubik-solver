@@ -32,6 +32,12 @@ export function SiteNav() {
             How it works
           </Link>
           <Link
+            href="/#faq"
+            className="hidden text-sm text-zinc-400 transition-colors hover:text-zinc-200 sm:block"
+          >
+            FAQ
+          </Link>
+          <Link
             href="/contact"
             className="hidden text-sm text-zinc-400 transition-colors hover:text-zinc-200 sm:block"
           >

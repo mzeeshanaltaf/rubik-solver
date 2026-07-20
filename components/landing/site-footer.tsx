@@ -8,6 +8,9 @@ export function SiteFooter() {
           <Link href="/solve" className="transition-colors hover:text-zinc-300">
             Solve a cube
           </Link>
+          <Link href="/#faq" className="transition-colors hover:text-zinc-300">
+            FAQ
+          </Link>
           <Link
             href="/contact"
             className="transition-colors hover:text-zinc-300"
