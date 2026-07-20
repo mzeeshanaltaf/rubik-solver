@@ -17,7 +17,15 @@ const STATS = [
 
 export function Stats() {
   return (
-    <section className="border-y border-zinc-800/80 bg-zinc-900/30">
+    <section
+      aria-labelledby="stats-heading"
+      className="border-y border-zinc-800/80 bg-zinc-900/30"
+    >
+      {/* Visually hidden: keeps the band's terse design while giving the
+          section a real heading in the document outline. */}
+      <h2 id="stats-heading" className="sr-only">
+        The numbers behind a Rubik&apos;s Cube solve
+      </h2>
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-6 py-16 md:grid-cols-[2fr_1fr_1fr] md:gap-8">
         {STATS.map((stat, i) => (
           <Reveal key={stat.value} delay={i * 0.08}>

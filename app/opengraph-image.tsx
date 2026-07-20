@@ -71,6 +71,21 @@ export default function Image() {
           >
             A 3D Rubik&apos;s Cube solver that runs entirely in your browser.
           </div>
+          <div
+            style={{
+              marginTop: 36,
+              display: "flex",
+              alignSelf: "flex-start",
+              backgroundColor: "#047857",
+              color: "#ffffff",
+              fontSize: 26,
+              fontWeight: 700,
+              padding: "16px 32px",
+              borderRadius: 12,
+            }}
+          >
+            Solve a cube free →
+          </div>
         </div>
         <div
           style={{

@@ -98,6 +98,28 @@ Env vars live in Coolify, not in the repo. The split matters:
 - **Runtime**: `N8N_CONTACT_WEBHOOK_URL`, `N8N_API_KEY`,
   `UPSTASH_REDIS_REST_URL/TOKEN`.
 
+## SEO & metadata
+
+`lib/site.ts` is the single source of truth for the public origin (`SITE_URL`,
+`SITE_NAME`, `AUTHOR`). It reads `NEXT_PUBLIC_SITE_URL` and falls back to the
+**production domain**, not localhost — a missing build-time var degrades to
+correct-in-production instead of emitting localhost canonicals and OG images.
+Everything below derives from it, so the domain is never hardcoded twice:
+
+- `app/sitemap.ts`, `app/robots.ts`, `app/manifest.ts` — file conventions.
+  `robots.ts` allows the major AI crawlers explicitly (GPTBot, ClaudeBot,
+  PerplexityBot, …) so LLM indexing is deliberate.
+- `app/llms.txt/route.ts` — `force-static` route handler serving an
+  [llms.txt](https://llmstxt.org) site map for AI assistants, generated from
+  `SITE_URL` + `lib/faq.ts`.
+- `components/seo/json-ld.tsx` — renders a JSON-LD block. `WebSite` + `FAQPage`
+  on `/`; `WebApplication` + `BreadcrumbList` on `/solve`.
+- `lib/faq.ts` — the FAQ copy. `components/landing/faq.tsx` and the `FAQPage`
+  JSON-LD both read this array, so markup can't drift from visible text. Keep it
+  that way; don't inline FAQ copy in either consumer.
+- Every page sets `alternates.canonical`. Layout holds sitewide `openGraph` /
+  `twitter` / `robots` defaults; pages override title, description and `og:url`.
+
 ## Conventions & gotchas
 
 - **Rotation convention** (`cube-3d.tsx`): clockwise sign is −1 for U/R/F and +1
@@ -110,6 +132,13 @@ Env vars live in Coolify, not in the repo. The split matters:
   at init), and the landing hero cube is likewise a `ssr: false` island
   (`components/landing/hero-cube-island.tsx`). Keep it that way; don't import
   cubejs or three into server components.
+- **`/solve` gets its indexable content from the server page, not the app.**
+  Because the solver is `ssr: false`, crawlers see none of it. `app/solve/page.tsx`
+  is a server component that renders the solver (which owns the first viewport
+  via `h-dvh`) and then real reference copy — `<h1>`, usage steps, notation
+  legend — *below* it in normal flow. The solver's own header shows the brand in
+  a `<div>`, not an `<h1>`, so the page keeps exactly one `<h1>`. Don't promote
+  it back, and don't move page copy into the client component.
 - `<body>` has `suppressHydrationWarning` (browser extensions inject attributes);
   don't remove it.
 - The worker is created with `new Worker(new URL("../lib/solver.worker.ts",

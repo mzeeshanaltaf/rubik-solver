@@ -41,7 +41,11 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="h-[52dvh] min-h-80 overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/40 lg:h-[560px]">
+        <div
+          role="img"
+          aria-label="A 3D Rubik's Cube scrambling and then solving itself, one animated face turn at a time."
+          className="h-[52dvh] min-h-80 overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/40 lg:h-[560px]"
+        >
           <HeroCubeIsland />
         </div>
       </div>

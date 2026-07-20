@@ -6,7 +6,15 @@ import { SiteFooter } from "@/components/landing/site-footer";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How Rubik Solver handles your data: what we collect, what we don't, and why.",
+    "How Rubik Solver handles your data: the solver runs locally in your browser, the contact form is the only thing we collect, and analytics are cookieless.",
+  alternates: { canonical: "/privacy" },
+  openGraph: {
+    title: "Privacy Policy · Rubik Solver",
+    description:
+      "What Rubik Solver collects, what it doesn't, and why. The solver itself runs entirely in your browser.",
+    type: "article",
+    url: "/privacy",
+  },
 };
 
 function Section({
@@ -75,8 +83,15 @@ export default function PrivacyPage() {
 
         <Section title="Cookies and analytics">
           <p>
-            The site does not set tracking cookies and does not use advertising
-            or third-party analytics services.
+            The site does not set tracking cookies and does not run advertising
+            or cross-site tracking of any kind.
+          </p>
+          <p>
+            We do measure basic, aggregate traffic — page views, referrer, and
+            general country — using Umami, a cookieless analytics tool we host
+            ourselves on our own infrastructure. No data is handed to a
+            third-party advertising network, nothing is used to build a profile
+            of you, and no individual visitor is identified.
           </p>
         </Section>
 

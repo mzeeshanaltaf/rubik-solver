@@ -7,7 +7,15 @@ import { ContactForm } from "@/components/contact/contact-form";
 export const metadata: Metadata = {
   title: "Contact & Feedback",
   description:
-    "Share feedback on Rubik Solver, report a bug, or suggest a feature.",
+    "Share feedback on Rubik Solver, report a bug, or suggest a feature. Every message is read, and we usually reply within a few days.",
+  alternates: { canonical: "/contact" },
+  openGraph: {
+    title: "Contact & Feedback · Rubik Solver",
+    description:
+      "Found a bug, have an idea, or just want to say hi? Send a message.",
+    type: "website",
+    url: "/contact",
+  },
 };
 
 // Short error codes set by the API route's redirect (?error=...) mapped to

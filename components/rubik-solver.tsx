@@ -240,18 +240,24 @@ export default function RubikSolver() {
   return (
     <div className="flex h-dvh flex-col bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800/80 px-6 py-4">
-        <h1 className="text-lg font-bold tracking-tight">
+        {/* Brand link, not the page heading — the real <h1> is server-rendered
+            in app/solve/page.tsx so crawlers see it without running JS. */}
+        <div className="text-lg font-bold tracking-tight">
           <Link href="/" className="transition-colors hover:text-emerald-400">
             Rubik Solver
           </Link>
-        </h1>
+        </div>
         <p className="text-xs text-zinc-500">
           Kociemba two-phase solver · drag to orbit, scroll to zoom
         </p>
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="relative min-h-72 flex-1">
+        <div
+          role="img"
+          aria-label="Interactive 3D Rubik's Cube. Drag to orbit the view, scroll to zoom."
+          className="relative min-h-72 flex-1"
+        >
           <CubeCanvas
             facelets={facelets}
             anim={anim?.move ?? null}

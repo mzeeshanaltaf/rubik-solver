@@ -7,7 +7,8 @@ Interactive 3D Rubik's Cube solver built with Next.js. The landing page shows a 
 ## Routes
 
 - `/` — server-rendered landing page with an animated 3D hero cube
-- `/solve` — the interactive solver (client-only)
+- `/solve` — the interactive solver (client-only 3D app, wrapped in a
+  server-rendered page with an `h1`, usage guide, and cube-notation reference)
 - `/contact` — contact form (n8n webhook, honeypot + per-IP rate limiting)
 - `/privacy` — privacy policy
 
@@ -54,6 +55,23 @@ The single source of truth is a 54-character facelet string (Kociemba order) man
 - `lib/solver.worker.ts` — solver init + solve off the main thread
 - `components/landing/hero-cube.tsx` — landing demo cube reusing the same renderer with precomputed scramble/solution pairs (no solver init cost on the landing page)
 - `scripts/verify-rotation.ts` — checks the visual rotation convention matches cubejs for all 18 moves (`npx tsx scripts/verify-rotation.ts`)
+
+## SEO & discoverability
+
+`lib/site.ts` is the single source of truth for the public origin (from
+`NEXT_PUBLIC_SITE_URL`, with the production domain as fallback), so the domain is
+never hardcoded twice. Built on top of it:
+
+- `app/sitemap.ts`, `app/robots.ts`, `app/manifest.ts` — Next.js file
+  conventions. `robots.ts` explicitly allows the major AI crawlers (GPTBot,
+  ClaudeBot, PerplexityBot, …).
+- `app/llms.txt/route.ts` — an [llms.txt](https://llmstxt.org) summary for AI
+  assistants, generated from `lib/site.ts` + `lib/faq.ts`.
+- `components/seo/json-ld.tsx` — JSON-LD structured data: `WebSite` + `FAQPage`
+  on `/`, `WebApplication` + `BreadcrumbList` on `/solve`.
+- `lib/faq.ts` — FAQ copy shared by the visible landing section and the
+  `FAQPage` markup, so the two can't drift apart.
+- Per-page canonicals + Open Graph; a 1200×630 OG image at `app/opengraph-image.tsx`.
 
 ## Stack
 
