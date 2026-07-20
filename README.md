@@ -65,7 +65,7 @@ Self-hosted on a Hostinger VPS running [Coolify](https://coolify.io), built with
 
 Pushing to `main` triggers `.github/workflows/deploy.yml`, which calls Coolify's deploy API with retries. It needs two repo secrets: `COOLIFY_API_TOKEN` (deploy-scoped) and `COOLIFY_APP_UUID`.
 
-> **Note:** `package-lock.json` must be generated on Linux. npm on Windows prunes transitive `@emnapi/*` deps that the container build's `npm ci` requires, which breaks deploys without ever failing a local build — see CLAUDE.md for the regeneration command.
+> **Note:** the container build installs with `npm install` (via `NIXPACKS_INSTALL_CMD`) rather than `npm ci`. npm on Windows prunes transitive `@emnapi/*` deps that `npm ci` then demands on Linux, which broke deploys without ever failing a local build. See CLAUDE.md for the details and the trade-off.
 
 ## Developer
 

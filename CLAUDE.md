@@ -93,7 +93,8 @@ it is fire-once with no retry. Don't enable both, or every push double-deploys.
 Env vars live in Coolify, not in the repo. The split matters:
 
 - **Build-time**: `NEXT_PUBLIC_UMAMI_SCRIPT_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`,
-  `NEXT_PUBLIC_SITE_URL`, `NIXPACKS_NODE_VERSION`, `NODE_ENV`.
+  `NEXT_PUBLIC_SITE_URL`, `NIXPACKS_NODE_VERSION`, `NIXPACKS_INSTALL_CMD`,
+  `NODE_ENV`.
 - **Runtime**: `N8N_CONTACT_WEBHOOK_URL`, `N8N_API_KEY`,
   `UPSTASH_REDIS_REST_URL/TOKEN`.
 
@@ -118,22 +119,24 @@ Env vars live in Coolify, not in the repo. The split matters:
   Preserve this — concurrent animations corrupt the pivot-group trick.
 - npm audit noise comes from `cubejs`'s ancient dev-time transitive deps; nothing
   from them ships to the client. Don't run `npm audit fix --force`.
-- **`package-lock.json` must stay Linux-resolvable.** Running `npm install` on
-  Windows can prune the nested `@emnapi/*` entries under
+- **The container build uses `npm install`, not `npm ci` — keep it that way.**
+  Coolify sets `NIXPACKS_INSTALL_CMD=npm install` for this app. Reason: npm on
+  Windows prunes the nested `@emnapi/*` entries under
   `@unrs/resolver-binding-wasm32-wasi` / `@tailwindcss/oxide-wasm32-wasi` (their
-  parents never install on win32). The container build then dies on `npm ci` with
-  `Missing: @emnapi/runtime@… from lock file` — a deploy-only failure that local
-  builds never reproduce. `npm install --package-lock-only` on Windows does *not*
-  fix it (it still picks the Windows-resolved version). Regenerate on Linux:
-  ```bash
-  docker run --rm -v /tmp/lockgen:/out node:22-alpine sh -c \
-    "apk add --no-cache git >/dev/null && git clone -q --depth 1 <repo> /r && cd /r \
-     && rm -f package-lock.json && npm install --package-lock-only --ignore-scripts \
-     && npm ci --dry-run >/dev/null && cp package-lock.json /out/"
-  ```
-  Then verify `npm ci --dry-run` still passes on Windows and that the
-  `@img/sharp-win32-*` entries survived. Escape hatch if it keeps regressing: set
-  `NIXPACKS_INSTALL_CMD=npm install` in Coolify to bypass `npm ci` entirely.
+  parents never install on win32), and `npm ci` then hard-fails on Linux with
+  `Missing: @emnapi/runtime@… from lock file`. That's a deploy-only failure a
+  local `npm run build` never reproduces, and it recurs every time the lockfile
+  is regenerated on Windows. `npm install` reconciles the lockfile instead of
+  demanding exact sync, so the whole class of failure goes away. Verified by
+  replaying the offending lockfile (`a14a77c`) in `node:22-alpine`: `npm ci`
+  fails, `npm install` passes.
+
+  Trade-off: builds are no longer strictly reproducible from the lockfile — npm
+  may resolve newer versions within the declared semver ranges. If you ever want
+  `npm ci` back, drop `NIXPACKS_INSTALL_CMD` **and** regenerate the lockfile on
+  Linux (`docker run --rm -v /tmp/out:/out node:22-alpine …
+  npm install --package-lock-only`), then confirm `npm ci --dry-run` passes on
+  both Linux and Windows.
 - **`NEXT_PUBLIC_*` are inlined at build time**, so they must be marked
   build-time in Coolify — not just runtime. Set only at runtime, the client
   bundle ships `undefined` and the Umami tracker silently never loads while the
