@@ -68,10 +68,34 @@ Single source of truth is the **logical cube** — a 54-char facelet string
   `N8N_CONTACT_WEBHOOK_URL`, `N8N_API_KEY`, `UPSTASH_REDIS_REST_URL/TOKEN`.
 - `app/privacy/page.tsx` — static privacy policy. Both it and `/contact` share
   `components/landing/{site-nav,site-footer}.tsx`.
+- `app/layout.tsx` — root layout (fonts, `metadataBase`, global metadata). Also
+  mounts the self-hosted Umami tracker via `next/script`, gated on
+  `NEXT_PUBLIC_UMAMI_WEBSITE_ID` so it renders only when configured. Umami tracks
+  SPA navigations itself — mount it once here, never per-page.
 
 Playback: `solutionIdx` = moves already applied. Step-forward animates
 `solution[idx]`; step-back animates `invert(solution[idx-1])` and decrements.
 Manual turns clear the stored solution (it's stale for the new state).
+
+## Deployment
+
+Self-hosted on a Hostinger VPS (`76.13.7.106`) running Coolify + Traefik, live at
+**https://rubiksolver.zeeshanai.cloud**. Coolify project "Rubik Solver",
+application uuid `ynfnrvabpztjg5vly01yuaxx`; built with nixpacks (no Dockerfile)
+on Node 22, container listens on 3000. Traefik terminates TLS and auto-renews the
+Let's Encrypt cert.
+
+Pushing to `main` triggers `.github/workflows/deploy.yml`, which calls Coolify's
+deploy API with retries (repo secrets `COOLIFY_API_TOKEN` — deploy-scoped — and
+`COOLIFY_APP_UUID`). Coolify's own git-push webhook is deliberately *not* used:
+it is fire-once with no retry. Don't enable both, or every push double-deploys.
+
+Env vars live in Coolify, not in the repo. The split matters:
+
+- **Build-time**: `NEXT_PUBLIC_UMAMI_SCRIPT_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID`,
+  `NEXT_PUBLIC_SITE_URL`, `NIXPACKS_NODE_VERSION`, `NODE_ENV`.
+- **Runtime**: `N8N_CONTACT_WEBHOOK_URL`, `N8N_API_KEY`,
+  `UPSTASH_REDIS_REST_URL/TOKEN`.
 
 ## Conventions & gotchas
 
@@ -94,5 +118,26 @@ Manual turns clear the stored solution (it's stale for the new state).
   Preserve this — concurrent animations corrupt the pivot-group trick.
 - npm audit noise comes from `cubejs`'s ancient dev-time transitive deps; nothing
   from them ships to the client. Don't run `npm audit fix --force`.
+- **`package-lock.json` must stay Linux-resolvable.** Running `npm install` on
+  Windows can prune the nested `@emnapi/*` entries under
+  `@unrs/resolver-binding-wasm32-wasi` / `@tailwindcss/oxide-wasm32-wasi` (their
+  parents never install on win32). The container build then dies on `npm ci` with
+  `Missing: @emnapi/runtime@… from lock file` — a deploy-only failure that local
+  builds never reproduce. `npm install --package-lock-only` on Windows does *not*
+  fix it (it still picks the Windows-resolved version). Regenerate on Linux:
+  ```bash
+  docker run --rm -v /tmp/lockgen:/out node:22-alpine sh -c \
+    "apk add --no-cache git >/dev/null && git clone -q --depth 1 <repo> /r && cd /r \
+     && rm -f package-lock.json && npm install --package-lock-only --ignore-scripts \
+     && npm ci --dry-run >/dev/null && cp package-lock.json /out/"
+  ```
+  Then verify `npm ci --dry-run` still passes on Windows and that the
+  `@img/sharp-win32-*` entries survived. Escape hatch if it keeps regressing: set
+  `NIXPACKS_INSTALL_CMD=npm install` in Coolify to bypass `npm ci` entirely.
+- **`NEXT_PUBLIC_*` are inlined at build time**, so they must be marked
+  build-time in Coolify — not just runtime. Set only at runtime, the client
+  bundle ships `undefined` and the Umami tracker silently never loads while the
+  build still goes green. Same trap makes `metadataBase` fall back to
+  `localhost:3000` and emit wrong canonical/OG URLs in production.
 - Folder name contains a space ("Rubik Solver") — quote paths in shell commands;
   the npm package name is `rubik-solver`.
